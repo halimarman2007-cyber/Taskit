@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-white shadow rounded-lg overflow-hidden">
+
+    <div class="px-6 py-4 border-b">
+        <h2 class="text-lg font-semibold">All Tasks</h2>
+    </div>
+
+    <table class="w-full text-left">
+        <thead class="bg-gray-50 text-gray-600 text-sm">
+            <tr>
+                <th class="px-6 py-3">Title</th>
+                <th class="px-6 py-3">Priority</th>
+                <th class="px-6 py-3">Status</th>
+                <th class="px-6 py-3">Assignee</th>
+                <th class="px-6 py-3">Due</th>
+            </tr>
+        </thead>
+
+        <tbody class="divide-y">
+            {% for task in tasks %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 font-medium">
+                    {{ task.title }}
+                </td>
+
+                <td class="px-6 py-4">
+                    {{ task.priority|title }}
+                </td>
+
+                <td class="px-6 py-4">
+                    {{ task.status|title }}
+                </td>
+
+                <td class="px-6 py-4">
+                    {{ task.assignee.username }}
+                </td>
+
+                <td class="px-6 py-4">
+                    {{ task.due_date }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                    No tasks yet
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+
+</div>
+{% endblock %}
