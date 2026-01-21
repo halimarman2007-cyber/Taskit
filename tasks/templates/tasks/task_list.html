@@ -1,56 +1,55 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="bg-white shadow rounded-lg overflow-hidden">
 
-    <div class="px-6 py-4 border-b">
-        <h2 class="text-lg font-semibold">All Tasks</h2>
+<!-- Banner -->
+<div class="w-full h-56 overflow-hidden">
+    <img
+        src="https://images.unsplash.com/photo-1501785888041-af3ef285b470"
+        class="w-full h-full object-cover opacity-90"
+        alt="Banner"
+    >
+</div>
+
+<!-- Main Container -->
+<div class="max-w-[1800px] px-12 -mt-20 relative">
+
+
+
+    <!-- Page Title -->
+
+    <div class="mt-40 mb-10">
+        <h1 class="text-3xl font-semibold">Master Planner</h1>
+        <p class="text-muted mt-2 text-sm">
+            Plan, assign, and track everything in one place
+        </p>
     </div>
 
-    <table class="w-full text-left">
-        <thead class="bg-gray-50 text-gray-600 text-sm">
-            <tr>
-                <th class="px-6 py-3">Title</th>
-                <th class="px-6 py-3">Priority</th>
-                <th class="px-6 py-3">Status</th>
-                <th class="px-6 py-3">Assignee</th>
-                <th class="px-6 py-3">Due</th>
-            </tr>
-        </thead>
 
-        <tbody class="divide-y">
-            {% for task in tasks %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-6 py-4 font-medium">
-                    {{ task.title }}
-                </td>
+    <!-- Scratchpad placeholder -->
+    <div class="bg-panel bg-gradient-to-b from-panel to-[#141416] border border-border rounded-lg p-4 mb-10">
+        <p class="text-muted text-sm mb-2">Scratchpad</p>
+        <div class="text-muted italic text-sm">
+            (Scratchpad will go here in Stage 5.2)
+        </div>
+    </div>
 
-                <td class="px-6 py-4">
-                    {{ task.priority|title }}
-                </td>
+    <!-- Tasks table placeholder -->
+    <div class="bg-panel bg-gradient-to-b from-panel to-[#141416] border border-border rounded-lg p-4 mb-10">
+        <p class="text-muted text-sm mb-2">Tasks</p>
+        <div class="text-muted italic text-sm">
+            (Inline editable task table will go here)
+        </div>
+    </div>
 
-                <td class="px-6 py-4">
-                    {{ task.status|title }}
-                </td>
-
-                <td class="px-6 py-4">
-                    {{ task.assignee.username }}
-                </td>
-
-                <td class="px-6 py-4">
-                    {{ task.due_date }}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" class="px-6 py-8 text-center text-gray-500">
-                    No tasks yet
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-
-    </table>
+    <!-- Calendar placeholder -->
+    <div class="bg-panel bg-gradient-to-b from-panel to-[#141416] border border-border rounded-lg p-4 mb-20">
+        <p class="text-muted text-sm mb-2">Calendar</p>
+        <div class="text-muted italic text-sm">
+            (Monthly calendar view will go here)
+        </div>
+    </div>
 
 </div>
+
 {% endblock %}
