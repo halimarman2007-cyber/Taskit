@@ -20,9 +20,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from tasks.views import task_list, create_task
+from tasks.views import save_scratchpad
+from tasks.views import update_task_field
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', task_list),
     path('create/', create_task),
+    path('scratchpad/save/', save_scratchpad),
+    path("tasks/<int:task_id>/update/", update_task_field),
 ]

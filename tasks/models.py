@@ -2,6 +2,15 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+class Scratchpad(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    content = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Scratchpad for {self.user.username}"
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     telegram_chat_id = models.CharField(max_length=100)

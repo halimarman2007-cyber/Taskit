@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% block content %}
 
 <!-- Banner -->
@@ -14,10 +13,7 @@
 <!-- Main Container -->
 <div class="max-w-[1800px] px-12 -mt-20 relative">
 
-
-
     <!-- Page Title -->
-
     <div class="mt-40 mb-10">
         <h1 class="text-3xl font-semibold">Master Planner</h1>
         <p class="text-muted mt-2 text-sm">
@@ -25,31 +21,211 @@
         </p>
     </div>
 
+    <!-- Scratchpad -->
+    <div
+        class="bg-panel border border-border rounded-lg p-4 mb-10"
+        x-data="{
+            content: `{{ scratchpad.content|escapejs }}`,
+            saving: false,
+            saveTimeout: null,
+            queueSave() {
+                clearTimeout(this.saveTimeout)
+                this.saveTimeout = setTimeout(() => this.save(), 600)
+            },
+            save() {
+                this.saving = true
+                fetch('/scratchpad/save/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({ content: this.content })
+                }).then(() => this.saving = false)
+            }
+        }"
+    >
+        <p class="text-sm font-medium mb-2">Scratchpad</p>
 
-    <!-- Scratchpad placeholder -->
-    <div class="bg-panel bg-gradient-to-b from-panel to-[#141416] border border-border rounded-lg p-4 mb-10">
-        <p class="text-muted text-sm mb-2">Scratchpad</p>
-        <div class="text-muted italic text-sm">
-            (Scratchpad will go here in Stage 5.2)
+        <textarea
+            x-model="content"
+            @input="
+                $el.style.height='auto';
+                $el.style.height=$el.scrollHeight+'px';
+                queueSave()
+            "
+            placeholder="Write anything here…"
+            class="w-full bg-transparent text-sm text-white resize-none focus:outline-none overflow-hidden min-h-[120px]"
+            autofocus
+        ></textarea>
+
+        <div class="text-xs text-muted mt-1">
+            <span x-show="saving">Saving…</span>
+            <span x-show="!saving">Saved</span>
         </div>
     </div>
 
-    <!-- Tasks table placeholder -->
-    <div class="bg-panel bg-gradient-to-b from-panel to-[#141416] border border-border rounded-lg p-4 mb-10">
-        <p class="text-muted text-sm mb-2">Tasks</p>
-        <div class="text-muted italic text-sm">
-            (Inline editable task table will go here)
+    <!-- Tasks -->
+    <div class="bg-panel border border-border rounded-lg mb-10 overflow-hidden">
+
+        <div class="px-4 py-3 border-b border-border">
+            <p class="text-sm font-medium">Tasks</p>
         </div>
+
+        <table class="w-full text-sm">
+            <thead class="text-muted border-b border-border">
+                <tr>
+                    <th class="px-4 py-2 text-left">Title</th>
+                    <th class="px-4 py-2 text-left">Notes</th>
+                    <th class="px-4 py-2 text-left">Due</th>
+                    <th class="px-4 py-2 text-left">Priority</th>
+                    <th class="px-4 py-2 text-left">Assignee</th>
+                    <th class="px-4 py-2 text-left">Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+            {% for task in active_tasks %}
+                <tr class="border-b border-border hover:bg-[#1f1f23]">
+
+                    <!-- TITLE -->
+                    <td class="px-4 py-3">
+                        <div x-data="{
+                            editing:false,
+                            value:'{{ task.title|escapejs }}',
+                            save(){
+                                fetch('/tasks/{{ task.id }}/update/',{
+                                    method:'POST',
+                                    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+                                    body:new URLSearchParams({field:'title',value:this.value})
+                                })
+                            }
+                        }">
+                            <span x-show="!editing"
+                                  @click="editing=true;$nextTick(()=> $refs.i.focus())"
+                                  class="cursor-pointer hover:underline"
+                                  x-text="value"></span>
+                            <input x-show="editing" x-ref="i"
+                                   x-model="value"
+                                   @blur="editing=false;save()"
+                                   @keydown.enter="editing=false;save()"
+                                   class="bg-transparent border-b border-border focus:outline-none w-full">
+                        </div>
+                    </td>
+
+                    <!-- NOTES -->
+                    <td class="px-4 py-3">
+                        <div x-data="{
+                            editing:false,
+                            value:'{{ task.description|escapejs }}',
+                            save(){
+                                fetch('/tasks/{{ task.id }}/update/',{
+                                    method:'POST',
+                                    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+                                    body:new URLSearchParams({field:'description',value:this.value})
+                                })
+                            }
+                        }">
+                            <span x-show="!editing"
+                                  @click="editing=true;$nextTick(()=> $refs.t.focus())"
+                                  class="cursor-pointer text-muted"
+                                  x-text="value || '—'"></span>
+                            <textarea x-show="editing" x-ref="t"
+                                      x-model="value"
+                                      @blur="editing=false;save()"
+                                      class="bg-transparent border border-border rounded p-1 w-full resize-none"
+                                      rows="2"></textarea>
+                        </div>
+                    </td>
+
+                    <!-- DUE -->
+                    <td class="px-4 py-3">{{ task.due_date }}</td>
+
+                    <!-- PRIORITY -->
+                    <td class="px-4 py-3">
+                        {% if task.priority == "low" %}
+                            <span class="px-2 py-1 bg-blue-500/20 text-blue-400 rounded">Low</span>
+                        {% elif task.priority == "medium" %}
+                            <span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded">Medium</span>
+                        {% else %}
+                            <span class="px-2 py-1 bg-orange-500/20 text-orange-400 rounded">High</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- ASSIGNEE -->
+                    <td class="px-4 py-3">{{ task.assignee.username }}</td>
+
+                    <!-- STATUS -->
+                    <td class="px-4 py-3">
+    <div
+        x-data="{
+            value: '{{ task.status }}',
+            saving: false,
+            save() {
+                this.saving = true
+                console.log('Saving status:', this.value)
+
+                fetch('/tasks/{{ task.id }}/update/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        field: 'status',
+                        value: this.value
+                    })
+                })
+                .then(r => r.json())
+                .then(() => {
+                    this.saving = false
+                })
+            }
+        }"
+    >
+        <select
+            x-model="value"
+            @change="save()"
+            class="bg-transparent border border-border rounded px-2 py-1 text-sm focus:outline-none"
+        >
+            <option value="todo">To do</option>
+            <option value="in_progress">In progress</option>
+            <option value="done">Done</option>
+        </select>
+
+        <span x-show="saving" class="text-xs text-muted ml-2">saving…</span>
+    </div>
+</td>
+
+
+                </tr>
+            {% endfor %}
+
+            {% if done_tasks %}
+                <tr>
+                    <td colspan="6" class="px-4 py-2 text-xs text-muted">Completed</td>
+                </tr>
+            {% endif %}
+
+            {% for task in done_tasks %}
+                <tr class="opacity-50 border-b border-border">
+                    <td class="px-4 py-3 line-through">{{ task.title }}</td>
+                    <td class="px-4 py-3">—</td>
+                    <td class="px-4 py-3">{{ task.due_date }}</td>
+                    <td class="px-4 py-3">—</td>
+                    <td class="px-4 py-3">{{ task.assignee.username }}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded">Done</span>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 
-    <!-- Calendar placeholder -->
-    <div class="bg-panel bg-gradient-to-b from-panel to-[#141416] border border-border rounded-lg p-4 mb-20">
-        <p class="text-muted text-sm mb-2">Calendar</p>
-        <div class="text-muted italic text-sm">
-            (Monthly calendar view will go here)
-        </div>
+    <!-- Calendar -->
+    <div class="bg-panel border border-border rounded-lg p-4 mb-20">
+        <p class="text-muted text-sm">(Monthly calendar view will go here)</p>
     </div>
 
 </div>
-
 {% endblock %}
