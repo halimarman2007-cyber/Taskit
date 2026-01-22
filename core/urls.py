@@ -22,6 +22,7 @@ from django.urls import path
 from tasks.views import task_list, create_task
 from tasks.views import save_scratchpad
 from tasks.views import update_task_field
+from tasks.views import create_task_inline
 
 
 urlpatterns = [
@@ -30,4 +31,5 @@ urlpatterns = [
     path('create/', create_task),
     path('scratchpad/save/', save_scratchpad),
     path("tasks/<int:task_id>/update/", update_task_field),
+    path('tasks/create/inline/', create_task_inline),
 ]

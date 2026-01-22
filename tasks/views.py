@@ -8,16 +8,23 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 
+from django.contrib.auth.models import User
+
 def task_list(request):
+    # Temporary: first user as current user (as you designed)
     user = User.objects.first()
 
-    active_tasks = Task.objects.exclude(status="done").order_by("due_date")
+    active_tasks = (
+        Task.objects
+        .exclude(status="done")
+        .order_by("due_date")
+    )
+
     done_tasks = (
         Task.objects
         .filter(status="done")
         .order_by("-due_date", "-created_at")[:5]
     )
-
 
     scratchpad, _ = Scratchpad.objects.get_or_create(user=user)
 
@@ -28,6 +35,7 @@ def task_list(request):
             "active_tasks": active_tasks,
             "done_tasks": done_tasks,
             "scratchpad": scratchpad,
+            "users": User.objects.all(),   # 👈 THIS FIXES THE ASSIGNEE DROPDOWN
         }
     )
 
@@ -121,3 +129,58 @@ def update_task_field(request, task_id):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def create_task_inline(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid method"}, status=405)
+
+    data = request.POST.copy()
+
+    # ✅ IMPORTANT: pass assignee ID directly (NOT User object)
+    # Django ModelForm handles FK conversion
+    data["assignee"] = data.get("assignee")
+    data["status"] = data.get("status", "todo")
+
+    form = TaskForm(data)
+
+    if not form.is_valid():
+        print("❌ FORM ERRORS:", form.errors)
+        return JsonResponse(
+            {"error": "Invalid form", "details": form.errors},
+            status=400
+        )
+
+    task = form.save()
+
+    # ✅ Telegram notification
+    try:
+        user_profile = UserProfile.objects.get(user=task.assignee)
+        chat_id = user_profile.telegram_chat_id
+
+        message = f"""
+📌 New Task Assigned!
+
+Title: {task.title}
+Priority: {task.priority.title()}
+Due: {task.due_date}
+        """
+
+        send_telegram_message(chat_id, message)
+
+    except UserProfile.DoesNotExist:
+        print("⚠️ No Telegram chat ID for user")
+
+    return JsonResponse({
+        "status": "created",
+        "task_id": task.id
+    })
+
+
+
+
+
+
