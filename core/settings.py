@@ -24,11 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-=kw5a1-rlam#zn_=z4s&6=e(+guqi+8+e%1nxg_t7#6*$7s1#&'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
-
+DEBUG = False
 # Application definition
 
 INSTALLED_APPS = [
@@ -116,8 +112,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 TELEGRAM_BOT_TOKEN = '8513184409:AAGHLUJuQo-nz54wSXtTGNDTr6bJqIJMMsk'
 
-ALLOWED_HOSTS = [".remote.it","19.168.1.38", "127.0.0.1", "localhost", ".ngrok-free.app"]
+ALLOWED_HOSTS = [".remote.it","192.168.1.38", "127.0.0.1", "localhost", ".ngrok-free.app"]
 CSRF_TRUSTED_ORIGINS = ["https://*.ngrok-free.app"]
