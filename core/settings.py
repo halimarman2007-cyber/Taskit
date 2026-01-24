@@ -117,7 +117,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_BOT_TOKEN = '8513184409:AAGHLUJuQo-nz54wSXtTGNDTr6bJqIJMMsk'
 
 ALLOWED_HOSTS = ["remote.it","19.168.1.38", "127.0.0.1", "localhost", ".ngrok-free.app"]
 CSRF_TRUSTED_ORIGINS = ["https://*.ngrok-free.app"]
