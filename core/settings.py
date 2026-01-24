@@ -119,5 +119,5 @@ USE_TZ = True
 STATIC_URL = 'static/'
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", ".ngrok-free.app"]
+ALLOWED_HOSTS = ["remote.it","19.168.1.38", "127.0.0.1", "localhost", ".ngrok-free.app"]
 CSRF_TRUSTED_ORIGINS = ["https://*.ngrok-free.app"]
