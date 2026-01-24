@@ -10,34 +10,68 @@ from django.contrib.auth.models import User
 
 from django.contrib.auth.models import User
 
+from django.utils.timezone import localdate
+import calendar
+from datetime import date
+
+from django.utils.timezone import localdate
+from datetime import date
+import calendar
+
 def task_list(request):
-    # Temporary: first user as current user (as you designed)
     user = User.objects.first()
 
-    active_tasks = (
-        Task.objects
-        .exclude(status="done")
-        .order_by("due_date")
-    )
+    active_tasks = Task.objects.exclude(status="done").order_by("due_date")
+    done_tasks = Task.objects.filter(status="done").order_by("-due_date")[:5]
 
-    done_tasks = (
-        Task.objects
-        .filter(status="done")
-        .order_by("-due_date", "-created_at")[:5]
-    )
+    # 🔹 Determine month/year from query params
+    today = localdate()
+    year = int(request.GET.get("year", today.year))
+    month = int(request.GET.get("month", today.month))
+
+    # Prevent invalid values
+    if month < 1:
+        month = 12
+        year -= 1
+    elif month > 12:
+        month = 1
+        year += 1
+
+    # Calendar data
+    month_calendar = calendar.monthcalendar(year, month)
+
+    calendar_tasks = Task.objects.filter(
+        due_date__year=year,
+        due_date__month=month
+    ).exclude(status="done")
+
+    # Navigation months
+    prev_month = month - 1 if month > 1 else 12
+    prev_year = year if month > 1 else year - 1
+
+    next_month = month + 1 if month < 12 else 1
+    next_year = year if month < 12 else year + 1
 
     scratchpad, _ = Scratchpad.objects.get_or_create(user=user)
 
-    return render(
-        request,
-        "tasks/task_list.html",
-        {
-            "active_tasks": active_tasks,
-            "done_tasks": done_tasks,
-            "scratchpad": scratchpad,
-            "users": User.objects.all(),   # 👈 THIS FIXES THE ASSIGNEE DROPDOWN
-        }
-    )
+    return render(request, "tasks/task_list.html", {
+        "active_tasks": active_tasks,
+        "done_tasks": done_tasks,
+        "scratchpad": scratchpad,
+        "users": User.objects.all(),
+
+        # calendar context
+        "month_calendar": month_calendar,
+        "calendar_tasks": calendar_tasks,
+        "current_month": date(year, month, 1).strftime("%B %Y"),
+        "today_day": today.day if (year == today.year and month == today.month) else None,
+
+        # navigation
+        "prev_month": prev_month,
+        "prev_year": prev_year,
+        "next_month": next_month,
+        "next_year": next_year,
+    })
 
 
 def create_task(request):

@@ -30,3 +30,33 @@
 
 </body>
 </html>
+
+<script>
+function calendarNav() {
+    return {
+        loading: false,
+
+        go(year, month) {
+            this.loading = true
+
+            const url = `/?year=${year}&month=${month}`
+
+            fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(r => r.text())
+            .then(html => {
+                const parser = new DOMParser()
+                const doc = parser.parseFromString(html, 'text/html')
+
+                const newCalendar = doc.querySelector('#calendar-content')
+                document.querySelector('#calendar-content').innerHTML =
+                    newCalendar.innerHTML
+
+                history.pushState({}, '', url)
+                this.loading = false
+            })
+        }
+    }
+}
+</script>

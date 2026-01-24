@@ -27,10 +27,10 @@
         x-data="{
             content: `{{ scratchpad.content|escapejs }}`,
             saving:false,
-            timeout:null,
+            t:null,
             queue(){
-                clearTimeout(this.timeout)
-                this.timeout=setTimeout(()=>this.save(),600)
+                clearTimeout(this.t)
+                this.t=setTimeout(()=>this.save(),600)
             },
             save(){
                 this.saving=true
@@ -46,7 +46,6 @@
         }"
     >
         <p class="text-sm font-medium mb-2">Scratchpad</p>
-
         <textarea
             x-model="content"
             @input="
@@ -57,7 +56,6 @@
             placeholder="Write anything here…"
             class="w-full bg-transparent text-sm resize-none focus:outline-none overflow-hidden min-h-[120px]"
         ></textarea>
-
         <div class="text-xs text-muted mt-1">
             <span x-show="saving">Saving…</span>
             <span x-show="!saving">Saved</span>
@@ -73,40 +71,27 @@
             due:'',
             priority:'medium',
             assignee:'',
-            saving:false,
             created:false,
-
-            ready(){
-                return this.title && this.due && this.assignee
-            },
-
+            ready(){ return this.title && this.due && this.assignee },
             autoCreate(){
                 if(this.ready() && !this.created){
-                    this.created = true
-                    this.create()
+                    this.created=true
+                    fetch('/tasks/create/inline/',{
+                        method:'POST',
+                        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+                        body:new URLSearchParams({
+                            title:this.title,
+                            due_date:this.due,
+                            priority:this.priority,
+                            assignee:this.assignee,
+                            status:'todo'
+                        })
+                    }).then(()=>location.reload())
                 }
-            },
-
-            create(){
-                this.saving=true
-                fetch('/tasks/create/inline/',{
-                    method:'POST',
-                    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-                    body:new URLSearchParams({
-                        title:this.title,
-                        due_date:this.due,
-                        priority:this.priority,
-                        assignee:this.assignee,
-                        status:'todo'
-                    })
-                })
-                .then(()=>location.reload())
             }
         }"
-
     >
 
-        <!-- Header -->
         <div class="px-4 py-3 border-b border-border flex items-center justify-between">
             <p class="text-sm font-medium">Tasks</p>
             <button
@@ -131,170 +116,47 @@
 
             <tbody>
 
-                <!-- NEW TASK ROW -->
+                <!-- NEW TASK -->
                 <tr x-show="showNew" class="border-b border-border bg-[#1a1a1e]">
                     <td class="px-4 py-3">
-                        <input
-                            x-model="title"
-                            @input="autoCreate()"
-                            placeholder="Task title"
-                            class="bg-transparent border-b border-border focus:outline-none w-full"
-                        >
+                        <input x-model="title" @input="autoCreate()"
+                               placeholder="Task title"
+                               class="bg-transparent border-b border-border focus:outline-none w-full">
                     </td>
-
                     <td class="px-4 py-3">—</td>
-
                     <td class="px-4 py-3">
-                        <input
-                            type="date"
-                            @input="autoCreate()"
-                            x-model="due"
-                            class="bg-transparent border border-border rounded px-2 py-1 text-sm"
-                        >
+                        <input type="date" x-model="due" @input="autoCreate()"
+                               class="bg-transparent border border-border rounded px-2 py-1 text-sm">
                     </td>
-
                     <td class="px-4 py-3">
-                        <select
-                            x-model="priority"
-                            @change="autoCreate()"
-                            class="bg-transparent border border-border rounded px-2 py-1 text-sm"
-                        >
+                        <select x-model="priority" @change="autoCreate()"
+                                class="bg-transparent border border-border rounded px-2 py-1 text-sm">
                             <option value="low">Low</option>
                             <option value="medium">Medium</option>
                             <option value="high">High</option>
                         </select>
                     </td>
-
                     <td class="px-4 py-3">
-                        <select
-                            x-model="assignee"
-                            @change="autoCreate()"
-                            class="bg-transparent border border-border rounded px-2 py-1 text-sm"
-                        >
+                        <select x-model="assignee" @change="autoCreate()"
+                                class="bg-transparent border border-border rounded px-2 py-1 text-sm">
                             <option value="">Assign to…</option>
                             {% for user in users %}
                                 <option value="{{ user.id }}">{{ user.username }}</option>
                             {% endfor %}
                         </select>
                     </td>
-
                     <td class="px-4 py-3 text-muted">To do</td>
                 </tr>
 
                 <!-- EXISTING TASKS -->
                 {% for task in active_tasks %}
-                <tr class="border-b border-border hover:bg-[#1f1f23]">
-
-                    <!-- TITLE -->
-                    <td class="px-4 py-3">
-                        <div x-data="{editing:false,value:'{{ task.title|escapejs }}'}">
-                            <span x-show="!editing"
-                                  @click="editing=true;$nextTick(()=> $refs.i.focus())"
-                                  x-text="value"
-                                  class="cursor-pointer hover:underline"></span>
-                            <input x-show="editing" x-ref="i"
-                                   x-model="value"
-                                   @blur="editing=false;
-                                   fetch('/tasks/{{ task.id }}/update/',{
-                                       method:'POST',
-                                       headers:{'Content-Type':'application/x-www-form-urlencoded'},
-                                       body:new URLSearchParams({field:'title',value:value})
-                                   })"
-                                   class="bg-transparent border-b border-border focus:outline-none w-full">
-                        </div>
-                    </td>
-
-                    <!-- NOTES -->
-                    <td class="px-4 py-3 text-muted">
-                        {{ task.description|default:"—" }}
-                    </td>
-
-                    <!-- DUE -->
-                    <td class="px-4 py-3">
-                        <input type="date"
-                               value="{{ task.due_date|date:'Y-m-d' }}"
-                               @change="
-                                   fetch('/tasks/{{ task.id }}/update/',{
-                                       method:'POST',
-                                       headers:{'Content-Type':'application/x-www-form-urlencoded'},
-                                       body:new URLSearchParams({field:'due_date',value:$event.target.value})
-                                   })"
-                               class="bg-transparent border border-border rounded px-2 py-1 text-sm">
-                    </td>
-
-                    <!-- PRIORITY -->
-                    <td class="px-4 py-3">
-                        <select
-                            @change="
-                                fetch('/tasks/{{ task.id }}/update/',{
-                                    method:'POST',
-                                    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-                                    body:new URLSearchParams({field:'priority',value:$event.target.value})
-                                })"
-                            class="bg-transparent border border-border rounded px-2 py-1 text-sm"
-                        >
-                            <option value="low" {% if task.priority == "low" %}selected{% endif %}>Low</option>
-                            <option value="medium" {% if task.priority == "medium" %}selected{% endif %}>Medium</option>
-                            <option value="high" {% if task.priority == "high" %}selected{% endif %}>High</option>
-                        </select>
-                    </td>
-
-                    <!-- ASSIGNEE -->
-                    <td class="px-4 py-3">
-                        <select
-                            @change="
-                                fetch('/tasks/{{ task.id }}/update/',{
-                                    method:'POST',
-                                    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-                                    body:new URLSearchParams({field:'assignee_id',value:$event.target.value})
-                                })"
-                            class="bg-transparent border border-border rounded px-2 py-1 text-sm"
-                        >
-                            {% for user in users %}
-                                <option value="{{ user.id }}"
-                                    {% if user.id == task.assignee.id %}selected{% endif %}>
-                                    {{ user.username }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </td>
-
-                    <!-- STATUS -->
-                    <td class="px-4 py-3">
-                        <select
-                            @change="
-                                fetch('/tasks/{{ task.id }}/update/',{
-                                    method:'POST',
-                                    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-                                    body:new URLSearchParams({field:'status',value:$event.target.value})
-                                }).then(()=>location.reload())"
-                            class="bg-transparent border border-border rounded px-2 py-1 text-sm"
-                        >
-                            <option value="todo" {% if task.status == "todo" %}selected{% endif %}>To do</option>
-                            <option value="in_progress" {% if task.status == "in_progress" %}selected{% endif %}>In progress</option>
-                            <option value="done" {% if task.status == "done" %}selected{% endif %}>Done</option>
-                        </select>
-                    </td>
-
-                </tr>
-                {% endfor %}
-
-                {% if done_tasks %}
-                <tr>
-                    <td colspan="6" class="px-4 py-2 text-xs text-muted">Completed</td>
-                </tr>
-                {% endif %}
-
-                {% for task in done_tasks %}
-                <tr class="opacity-50 border-b border-border">
-                    <td class="px-4 py-3 line-through">{{ task.title }}</td>
-                    <td class="px-4 py-3">—</td>
+                <tr id="task-{{ task.id }}" class="border-b border-border hover:bg-[#1f1f23] scroll-mt-32">
+                    <td class="px-4 py-3">{{ task.title }}</td>
+                    <td class="px-4 py-3 text-muted">{{ task.description|default:"—" }}</td>
                     <td class="px-4 py-3">{{ task.due_date }}</td>
-                    <td class="px-4 py-3">—</td>
+                    <td class="px-4 py-3">{{ task.priority }}</td>
                     <td class="px-4 py-3">{{ task.assignee.username }}</td>
-                    <td class="px-4 py-3">
-                        <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded">Done</span>
-                    </td>
+                    <td class="px-4 py-3">{{ task.status }}</td>
                 </tr>
                 {% endfor %}
 
@@ -302,9 +164,52 @@
         </table>
     </div>
 
-    <!-- Calendar -->
+    <!-- CALENDAR -->
     <div class="bg-panel border border-border rounded-lg p-4 mb-20">
-        <p class="text-muted text-sm">(Monthly calendar view will go here)</p>
+
+        <div class="flex items-center justify-between mb-4">
+            <a href="?year={{ prev_year }}&month={{ prev_month }}"
+               class="text-muted hover:text-white text-lg">‹</a>
+
+            <p class="text-sm font-medium">{{ current_month }}</p>
+
+            <a href="?year={{ next_year }}&month={{ next_month }}"
+               class="text-muted hover:text-white text-lg">›</a>
+        </div>
+
+        <div class="grid grid-cols-7 text-xs text-muted mb-2">
+            <div>Mon</div><div>Tue</div><div>Wed</div>
+            <div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+        </div>
+
+        <div class="grid grid-cols-7 gap-px bg-border rounded overflow-hidden">
+            {% for week in month_calendar %}
+                {% for day in week %}
+                <div class="min-h-[120px] bg-[#141416] p-2 text-xs space-y-1">
+                    {% if day %}
+                        {% if day == today_day %}
+                            <div class="w-6 h-6 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
+                                {{ day }}
+                            </div>
+                        {% else %}
+                            <div class="text-muted">{{ day }}</div>
+                        {% endif %}
+
+                        {% for task in calendar_tasks %}
+                            {% if task.due_date.day == day %}
+                                <div
+                                    class="px-2 py-1 rounded text-xs truncate bg-blue-500/30 text-blue-300 cursor-pointer"
+                                    onclick="document.getElementById('task-{{ task.id }}')?.scrollIntoView({behavior:'smooth',block:'center'})"
+                                >
+                                    {{ task.title }}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
     </div>
 
 </div>
